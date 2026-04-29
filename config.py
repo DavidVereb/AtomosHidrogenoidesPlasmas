@@ -7,7 +7,7 @@ import scipy.sparse as sp
 import scipy.linalg as la
 from scipy.special import lpmv
 import scipy.constants as cte
-from scipy.constants import k, epsilon_0, e, h, m_e, c, hbar
+from scipy.constants import k, epsilon_0, e, h, m_e, m_p, c, hbar
 
 E_h, _, _ = cte.physical_constants['Hartree energy']
 a_0, _, _ = cte.physical_constants['Bohr radius']

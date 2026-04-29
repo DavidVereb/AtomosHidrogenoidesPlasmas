@@ -62,7 +62,6 @@ for l in range(4):
 ################
 np.savez_compressed(
     'data/funciones_onda.npz',
-    r=r,
     E_l0=E_dict[0], E_l1=E_dict[1], E_l2=E_dict[2], E_l3=E_dict[3],
     u_l0=u_dict[0], u_l1=u_dict[1], u_l2=u_dict[2], u_l3=u_dict[3]
 )

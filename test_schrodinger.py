@@ -5,17 +5,14 @@ Script de comprobación visual para las funciones de onda del átomo en plasma.
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from .config import *
 
 def plot_frontera(l, n):
     datos = np.load('data/funciones_onda.npz')
 
-    r = datos['r']
-    R_max = r[-1]
-
     u_matriz = datos[f'u_l{l}']
 
     i = n - l - 1
-
 
     if i < 0 or i >= u_matriz.shape[1]:
         print(f"Error: El estado n={n} no existe físicamente para l={l} con los parámetros actuales.")
