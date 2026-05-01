@@ -4,7 +4,6 @@ Script de comprobación visual para las funciones de onda del átomo en plasma.
 
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 from .config import *
 
 def plot_frontera(l, n):

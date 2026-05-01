@@ -5,6 +5,7 @@ que den cero. Convierte los resultados a unidades del S.I. y calcula los coefici
 
 Exporta en "data/coeficientes_einstein.npz" las frecuencias de transición v_if y los coeficientes A_if.
 """
+from scipy.constants import epsilon_0
 
 from config import *
 
@@ -58,20 +59,32 @@ u_i = datos["u_l1"][:, :num_estados_i]
 ### ELEMENTOS MATRIZ TRANSICIONES (RADIAL) ###
 ##############################################
 # Elementos de matriz al cuadrado
-S_if = []
+S_if = np.array([])
 for i in range(num_estados_i):
     integral_radial = np.trapezoid(np.conj(u_f)*r*u_i[:, i])
     S_if[i] = (integral_radial**2) * factor_angular
 
-#######################
-### PERFIL DE LINEA ###
-#######################
+#####♯###########################
+### FRECUENCIAS DE TRANSICIÓN ###
+#################################
 # A partir de ahora usamos el Sistema Internacional
 nu_if = (E_i - E_f) * E_h / h
 
-gamma_G = np.sqrt(2*np.log(2))*np.sqrt(k*T_e/(m_p*c**2))*nu_if
-sigma = np.sqrt(2*np.log(2))*gamma_G
+##############################
+### COEFICIENTES EINSTEIN ###
+#############################
+A_if = 8*np.pi**2*(a_0*e)**2/(3*epsilon_0*hbar*c**3) * nu_if**3 * S_if
 
-n = np.arange(2, 11)
-gamma_L = 8*np.pi**2*n_e/(6*np.sqrt(3))*hbar**2/m_e**2*np.sqrt(2*m_e/(np.pi*k*T_e))*(0.9-1.1/Z)*(3*n/(2*Z))**2*(n**2-3)
+#######################
+### PERFIL DE LINEA ###
+#######################
+n = np.arange(2, n_max+1)
+
+sigma = 2*np.log(2)*np.sqrt(k*T_e/(m_p*c**2))*nu_if
+gamma_L = 8*np.pi**2*n_e/(6*np.sqrt(3)) * (hbar/m_e)**2 * np.sqrt(2*m_e/(np.pi*k*T_e)) * (0.9-1.1/Z)*(3*n/(2*Z))**2*(n**2-3)
+
+x, w = np.polynomial.hermite.hermgauss(40)
+phi_V = np.array([])
+for i in range(n_max):
+    phi_V[i] = lambda nu: gamma_L[i]/(2*np.pi**(3/2))*np.sum(w/((nu-nu_if[i]-np.sqrt(2)*sigma[i]*x)**2 + 1/4*gamma_L[i]**2))
 
