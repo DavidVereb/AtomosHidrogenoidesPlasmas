@@ -29,7 +29,7 @@ V = lambda _r: -Z/_r*np.exp(-_r/r_D)*(1 - Gamma + 1/2*Gamma*_r/r_D)
 ####################
 ### HAMILTONIANO ###
 ####################
-diagonal_principal = lambda l: 1/dr**2 + V(r_inner) + l*(l+1)/(2*r_inner**2)
+diagonal_principal = lambda _l: 1/dr**2 + V(r_inner) + _l*(_l+1)/(2*r_inner**2)
 diagonal_secundaria = -1/(2*dr**2)*np.ones(N-2)
 
 ################
@@ -53,7 +53,7 @@ for l in range(4):
 ### NORMALIZACIÓN ###
 #####################
 for l in range(4):
-    norma = np.sqrt(np.trapezoid(np.abs(u_dict[l])**2, r, axis=0))
+    norma = np.sqrt(np.trapezoid(np.abs(u_dict[l])**2, x=r, axis=0))
     u_dict[l] /= norma
 
 
