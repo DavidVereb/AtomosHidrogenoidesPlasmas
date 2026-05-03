@@ -49,6 +49,15 @@ for l in range(4):
     E_dict[l] = E
     u_dict[l] = u
 
+################
+### FILTRADO ###
+################
+n_max = 10 # Nos restringimos a n=2,...,10
+for l in range(4):
+    num_estados_i = min(n_max-l, len(E_dict[l]))
+    E_dict[l] = E_dict[l][:num_estados_i]
+    u_dict[l] = u_dict[l][:, :num_estados_i]
+
 #####################
 ### NORMALIZACIÓN ###
 #####################
@@ -56,12 +65,13 @@ for l in range(4):
     norma = np.sqrt(np.trapezoid(np.abs(u_dict[l])**2, x=r, axis=0))
     u_dict[l] /= norma
 
-
 ################
 ### GUARDADO ###
 ################
 np.savez_compressed(
     'data/funciones_onda.npz',
-    E_l0=E_dict[0], E_l1=E_dict[1], E_l2=E_dict[2], E_l3=E_dict[3],
-    u_l0=u_dict[0], u_l1=u_dict[1], u_l2=u_dict[2], u_l3=u_dict[3]
+    E_0 = E_dict[0][0],
+    u_0 = u_dict[0][:, 0],
+    E_l0=E_dict[0][1:], E_l1=E_dict[1], E_l2=E_dict[2], E_l3=E_dict[3],
+    u_l0=u_dict[0][:, 1:], u_l1=u_dict[1], u_l2=u_dict[2], u_l3=u_dict[3]
 )

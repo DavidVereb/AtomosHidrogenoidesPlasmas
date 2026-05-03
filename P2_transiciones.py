@@ -44,23 +44,23 @@ for q in [-1, 0, 1]:
 ####################
 ### ESTADO FINAL ###
 ####################
-E_f = datos["E_l0"][0]
-u_f = datos["u_l0"][:, 0]
+E_f = datos["E_0"]
+u_f = datos["u_0"]
 
 #########################
 ### ESTADOS INICIALES ###
 #########################
-n_max = 10 # Nos interesan n=2,...,10
-num_estados_i = min(n_max-l_i, len(datos["E_l1"]))
-E_i = datos["E_l1"][:num_estados_i]
-u_i = datos["u_l1"][:, :num_estados_i]
+#n_max = 10 # Nos interesan n=2,...,10
+#num_estados_i = min(n_max-l_i, len(datos["E_l1"]))
+E_i = datos["E_l1"]
+u_i = datos["u_l1"]
 
 ##############################################
 ### ELEMENTOS MATRIZ TRANSICIONES (RADIAL) ###
 ##############################################
 # Elementos de matriz al cuadrado
-S_if = np.zeros(num_estados_i)
-for i in range(num_estados_i):
+S_if = np.zeros(len(E_i))
+for i in range(len(E_i)):
     integral_radial = np.trapezoid(np.conj(u_f)*r*u_i[:, i], x=r)
     S_if[i] = (integral_radial**2) * factor_angular
 
@@ -78,10 +78,8 @@ A_if = 8*np.pi**2*(a_0*e)**2/(3*epsilon_0*hbar*c**3) * nu_if**3 * S_if
 ################
 ### GUARDADO ###
 ################
-n_i = np.arange(2, 2+num_estados_i)
 np.savez_compressed(
     'data/coeficientes_einstein.npz',
-    n_i = n_i,
     nu_if = nu_if,
     A_if = A_if,
 )
