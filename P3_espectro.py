@@ -6,6 +6,7 @@ colisional. Finalmente suma todo para calcular la emisividad j(v) y la intensida
 Exporta en "data/espectro_final.npz" el vector de frecuencias v y el vector de intensidad específica I(v) de la serie
 Lyman.
 """
+from matplotlib import pyplot as plt
 
 from config import *
 
@@ -17,37 +18,48 @@ datos_P2 = np.load("data/coeficientes_einstein.npz")
 nu_if = datos_P2["nu_if"]
 A_if = datos_P2["A_if"]
 
-#########################
-### MALLA FRECUENCIAS ###
-#########################
-nu_min = np.min(nu_if)*0.95
-nu_max = np.max(nu_if)*1.05
-nu = np.linspace(nu_min, nu_max, N_nu)
-
-#######################
-### PERFIL DE LINEA ###
-#######################
+##################################
+### PARÁMETROS PERFIL DE LINEA ###
+##################################
 sigma = 2*np.log(2)*np.sqrt(k*T_e/(m_p*c**2))*nu_if
 n_i = np.arange(2, 2+len(nu_if))
 gamma_L = 8*np.pi**2*n_e/(6*np.sqrt(3)) * (hbar/m_e)**2 * np.sqrt(2*m_e/(np.pi*k*T_e)) * (0.9-1.1/Z)*(3*n_i/(2*Z))**2*(n_i**2-3)
 # ¿Guion puede estar mal?
 gamma_L = np.abs(gamma_L)
 
-"""
+######################################
+### MALLA FRECUENCIAS (ADAPTATIVA) ###
+###################################♯##
+nu_min = np.min(nu_if)*0.95
+nu_max = np.max(nu_if)*1.05
+
+nu = np.linspace(nu_min, nu_max, N_nu_base)
+#for i in range(len(nu_if)):
+#    ancho = 3*sigma[i] + 10*gamma_L[i]
+#    nu_local = np.linspace(nu_if[i]-ancho, nu_if[i]+ancho, N_nu_local)
+#    nu = np.concatenate((nu, nu_local))
+#nu = np.unique(np.sort(nu))
+
+#######################
+### PERFIL DE LINEA ###
+#######################
 phi_V = []
-for i in range(len(nu_if)):
-    phi_G = 1/(sigma[i]*np.sqrt(2*np.pi))*np.exp(-(nu-nu_if[i])**2/(2*sigma[i]**2))
-    phi_L = 1/np.pi*(gamma_L[i]/2)/((nu-np.mean(nu))** 2+(gamma_L[i]/2)**2)
+d_nu = nu[1]-nu[0]
+nu_centrado = nu - np.mean(nu)
+if voigt_manual:
+    for i in range(len(nu_if)):
+        phi_G = 1/(sigma[i]*np.sqrt(2*np.pi)) * np.exp(-(nu_centrado-nu_if[i])**2/(2*sigma[i]**2))
+        phi_L = 1/np.pi*(gamma_L[i]/2)/(nu_centrado**2+(gamma_L[i]/2)**2)
 
-    perfil = np.convolve(phi_G, phi_L, mode='same')
-    phi_V.append(perfil)
-"""
+        perfil = d_nu*fftconvolve(phi_G, phi_L, mode='same')
+        phi_V.append(perfil)
+else:
+    for i in range(len(nu_if)):
+        perfil = voigt_profile(nu-nu_if[i], sigma[i], gamma_L[i]/2)
+        phi_V.append(perfil)
 
-phi_V = []
-for i in range(len(nu_if)):
-    perfil = voigt_profile(nu-nu_if[i], sigma[i], gamma_L[i]/2)
-    phi_V.append(perfil)
-
+#plt.plot(nu, phi_V[0])
+#plt.xlim([2.453e15, 2.459e15])
 
 #########################
 ### FUNCIÓN PARTICIÓN ###
@@ -59,6 +71,7 @@ for l in range(4):
     # Pasamos de Hartrees a Julios
     for E_nl in E_l:
         G_H += g_l*np.exp(-E_nl*E_h/(k * T_e))
+print("G_H:", G_H)
 
 #######################################
 ### ENERGÍA POTENCIAL DE IONIZACIÓN ###
@@ -78,9 +91,9 @@ n_H = 1/ ((Z-1)/n_e + 2*Z/(lambda_e*n_e**2)*1/G_H*np.exp(-chi_H/(k*T_e)))
 E_l1_vals = datos_P1["E_l1"]
 n_H_l1 = n_H/G_H*6*np.exp(-E_l1_vals*E_h/(k*T_e))
 
-########################################
-### POBLACIÓN NÚCLEOS (¿INNECESARIO? ###
-########################################
+#########################
+### POBLACIÓN NÚCLEOS ###
+#########################
 n_p = (n_e-(Z-1)*n_H)/Z
 
 #############################
@@ -96,5 +109,7 @@ for i in range(len(nu_if)):
 np.savez_compressed(
     'data/espectro_final.npz',
     nu = nu,
-    I=I
+    I=I,
+    n_H = n_H,
+    n_p = n_p
 )

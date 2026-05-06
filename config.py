@@ -7,6 +7,7 @@ import scipy.sparse as sp
 import scipy.linalg as la
 from scipy.special import lpmv
 from scipy.special import voigt_profile # Prueba temporal
+from scipy.signal import fftconvolve
 import scipy.constants as cte
 from scipy.constants import k, epsilon_0, e, h, m_e, m_p, c, hbar
 
@@ -17,13 +18,14 @@ a_0, _, _ = cte.physical_constants['Bohr radius']
 ### PARÁMETROS PLASMA ###
 #########################
 
-#T_e = 11_600
-T_e = 2_000_000
-n_e = 1e14
+T_e_eV = 3 # eV
+T_e = T_e_eV*11_600 # Kelvin
+n_e_cm = 1e18
+n_e = n_e_cm*1e6 # m^-3
 Z = 1
 L = 1
 
-##############################
+###############################
 ### DISCRETIZACIÓN ATÓMICA ###
 ##############################
 R_max = 350
@@ -35,4 +37,10 @@ r_inner = r[1:-1]
 #################################
 ### DISCRETIZACIÓN FRECUENCIA ###
 #################################
-N_nu = 100_000
+N_nu_base = 100_000
+N_nu_local = 100_000
+
+#############################
+### OPCIONES DE EJECUCIÓN ###
+#############################
+voigt_manual = False
