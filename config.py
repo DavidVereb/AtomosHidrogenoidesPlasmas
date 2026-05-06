@@ -44,3 +44,5 @@ N_nu_local = 100_000
 ### OPCIONES DE EJECUCIÓN ###
 #############################
 voigt_manual = False
+
+print(e/k)
