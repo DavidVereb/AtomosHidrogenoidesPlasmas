@@ -73,7 +73,7 @@ nu_if = (E_i - E_f) * E_h / h
 #############################
 ### COEFICIENTES EINSTEIN ###
 #############################
-A_if = 8*np.pi**2*(a_0*e)**2/(3*epsilon_0*hbar*c**3) * nu_if**3 * S_if
+A_if = 8 / 3 * np.pi**2 * (a_0 * e)**2 / (epsilon_0 * hbar * c**3) * nu_if**3 * S_if
 
 ################
 ### GUARDADO ###

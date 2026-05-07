@@ -1,7 +1,8 @@
 import numpy as np
 import scipy as sp
 
-from scipy.constants import physical_constants, k, epsilon_0, e, h, m_e, m_p, c, hbar
+import math
+from scipy.constants import physical_constants, k, epsilon_0, e, h, m_e, m_p, c, hbar, Rydberg
 
 E_h, _, _ = physical_constants['Hartree energy']
 a_0, _, _ = physical_constants['Bohr radius']
@@ -146,13 +147,13 @@ class Plasma:
         # Definimos autoenergías y autofunciones del plasma en Hartrees
         if len(E_dict[0]) > 0:
             self.E_0 = E_h * E_dict[0][0]
-            self.u_0 = E_h * u_dict[0][:, 0]
+            self.u_0 = u_dict[0][:, 0]
 
             self.E_l[0] = E_h * E_dict[0][1:]
-            self.u_l[0] = E_h * u_dict[0][:, 1:]
+            self.u_l[0] = u_dict[0][:, 1:]
             for l in range(1, self.l_max + 1):
                 self.E_l[l] = E_h * E_dict[l]
-                self.u_l[l] = E_h * u_dict[l]
+                self.u_l[l] = u_dict[l]
         else:
             print("¡Aviso! El plasma es tan denso que no existen estados ligados.")
             self.E_0 = None
@@ -175,6 +176,8 @@ class Plasma:
         # Regla de selección
         l_i = 1
 
+        N_lm = lambda l, m: (-1)**m * np.sqrt((2 * l + 1) / (4 * np.pi) * math.factorial(l - m) / math.factorial(l + m))
+
         factor_angular = 0
 
         for q in [-1, 0, 1]:
@@ -186,7 +189,12 @@ class Plasma:
             P_foton = sp.special.lpmv(q, 1, x)
             P_inicial = sp.special.lpmv(m_i, l_i, x)
 
-            integral_theta = np.sum(w * P_final * P_foton * P_inicial)
+            # Armónicos esféricos
+            Y_final = N_lm(l_f, m_f) * P_final
+            Y_foton = N_lm(1, q) * P_foton
+            Y_inicial = N_lm(l_i, m_i) * P_inicial
+
+            integral_theta = np.sum(w * Y_final * Y_foton * Y_inicial)
             integral_phi = 2*np.pi
             factor_angular += (integral_theta * integral_phi)**2
 
@@ -199,11 +207,11 @@ class Plasma:
         S_if = np.zeros(len(E_i))
         for n in range(len(E_i)):
             integral_radial = np.trapezoid(np.conj(u_f) * self.r * u_i[:, n], x = self.r)
-            S_if[n] = integral_radial**2 * factor_angular
+            S_if[n] = 4 * np.pi / 3 * integral_radial**2 * factor_angular
 
         # Usamos Sistema Internacional a partir de ahora.
-        self.nu_if = (E_i - E_f) * E_h / h
-        self.A_if = 8 * np.pi**2 * (a_0 * e)**2 / (3 * epsilon_0 * hbar * c**3) * self.nu_if**3 * S_if
+        self.nu_if = (E_i - E_f) / h
+        self.A_if = 8 / 3 * np.pi**2 * (a_0 * e)**2 / (epsilon_0 * hbar * c**3) * self.nu_if**3 * S_if
 
     def solve_population(self, plasma_effects=True):
         # Función de partición
@@ -212,12 +220,12 @@ class Plasma:
             for l in range(self.l_max+1):
                 g_l = 2 * (2 * l + 1)
                 for E_nl in self.E_l[l]:
-                    self.G_H += g_l * np.exp(-(E_nl-self.E_0) / (k * self.T_e))
+                    self.G_H += g_l * np.exp(-(E_nl - self.E_0 ) / (k * self.T_e))
         else:
             for n in range(2, len(self.E_l[0])+2):
                 g_n = 2 * n**2
                 E_n = self.E_l[0][n-2]
-                self.G_H += g_n * np.exp(-(E_n-self.E_0) / (k * self.T_e))
+                self.G_H += g_n * np.exp(-(E_n - self.E_0) / (k * self.T_e))
 
         # Energía potencial de ionización
         chi_H = -self.E_0
@@ -235,7 +243,7 @@ class Plasma:
 
     def solve_spectrum(self):
         # Parámetros perfil de linea
-        sigma = 2 * np.log(2) * np.sqrt(k * self.T_e / (m_p * c ** 2)) * self.nu_if
+        sigma = np.sqrt(k * self.T_e / (m_p * c ** 2)) * self.nu_if
         n_i = np.arange(2, 2 + len(self.nu_if))
         gamma_L = 8 * np.pi**2 * self.n_e / (6 * np.sqrt(3)) * (hbar / m_e)**2 * np.sqrt(2 * m_e /
                 (np.pi * k * self.T_e)) * (0.9 - 1.1 / self.Z) * (3 * n_i / (2 * self.Z))**2 * (n_i**2 - 3)
@@ -254,7 +262,7 @@ class Plasma:
             phi_V.append(perfil)
 
         # Intensidad específica
-        n_H_l1 = 6 * self.n_H / self.G_H * np.exp(-(self.E_l[1] - self.E_0) / (k * self.T_e))
+        n_H_l1 = 6 * self.n_H / self.G_H * np.exp(-(self.E_l[1]-self.E_0) / (k * self.T_e))
 
         self.I = 0
         for n in range(len(self.nu_if)):
@@ -262,10 +270,10 @@ class Plasma:
 
     def solve_plasma(self, plasma_effects=True):
         print("Resolviendo ecuación de autovalores...")
-        self.solve_schrodinger(plasma_effects=True)
+        self.solve_schrodinger(plasma_effects)
         print("Resolviendo transiciones...")
         self.solve_transitions()
         print("Resolviendo poblaciones...")
-        self.solve_population(plasma_effects=True)
+        self.solve_population(plasma_effects)
         print("Resolviendo espectro...")
         self.solve_spectrum()
