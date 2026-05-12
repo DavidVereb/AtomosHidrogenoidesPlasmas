@@ -245,10 +245,15 @@ class Plasma:
         # Parámetros perfil de linea
         sigma = np.sqrt(k * self.T_e / (m_p * c ** 2)) * self.nu_if
         n_i = np.arange(2, 2 + len(self.nu_if))
+        """
+        Original del guion
         gamma_L = 8 * np.pi**2 * self.n_e / (6 * np.sqrt(3)) * (hbar / m_e)**2 * np.sqrt(2 * m_e /
                 (np.pi * k * self.T_e)) * (0.9 - 1.1 / self.Z) * (3 * n_i / (2 * self.Z))**2 * (n_i**2 - 3)
         # ¿Guion puede estar mal?
         gamma_L = np.abs(gamma_L)
+        """
+        gamma_L = 8 * np.pi**2 * self.n_e / (6 * np.sqrt(3)) * (hbar / m_e)**2 * np.sqrt(2 * m_e /
+                (np.pi * k * self.T_e)) * (3 * n_i / (2 * self.Z))**2 * (n_i**2 - 3)
 
         # Malla frecuencias
         self.nu_min = self.nu_if[0] * 0.95
